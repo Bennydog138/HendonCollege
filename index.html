@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hendon College</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Styles -->
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { background: linear-gradient(135deg, #fffde6, #fff9cc); min-height: 100vh; }
+
+.header { background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); color: #fff; padding: 20px 0; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+.header h1 { font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+
+.nav { background: #FFC107; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.nav button { background: none; border: none; color: white; padding: 15px 25px; cursor: pointer; font-size: 16px; transition: 0.3s; border-right: 1px solid rgba(255,255,255,0.2);}
+.nav button:hover, .nav button.active { background: #FFD700; }
+
+.container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+.page { display: none; background: #fff8dc; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+.page.active { display: block; animation: fadeIn 0.3s; }
+
+@keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
+
+h2 { color: #FFD700; margin-bottom: 20px; font-size: 2em; border-bottom: 3px solid #FFD700; padding-bottom: 10px;}
+h3 { color: #FFC107; margin: 15px 0; }
+
+button.btn { background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); color: #fff; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; transition: 0.2s;}
+button.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255,215,0,0.3); }
+
+.login-options { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 20px; margin-top: 30px; }
+.login-card { background: linear-gradient(135deg,#FFD700,#FFC107); color: #fff; padding: 30px; border-radius: 10px; cursor: pointer; text-align: center; transition: 0.3s; }
+.login-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(255,215,0,0.3); }
+
+.login-form { max-width: 400px; margin: 20px auto; padding: 30px; background: #fff8dc; border-radius: 10px; border: 2px solid #FFD700; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+.form-group input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+.form-group input:focus { outline: none; border-color: #FFD700; }
+
+.alert { padding: 15px; border-radius: 5px; margin: 10px 0; background: #fff3cd; border: 1px solid #ffeeba; color: #856404;}
+.alert.error { background: #f8d7da; border:1px solid #f5c6cb; color: #721c24; }
+
+.dashboard { display: none; }
+.dashboard.active { display: block; }
+.dashboard-header { background: linear-gradient(135deg,#FFD700,#FFC107); color:#fff; padding:20px; border-radius:10px; margin-bottom:20px; display:flex; justify-content: space-between; align-items:center;}
+
+.tabs { display:flex; border-bottom: 2px solid #FFD700; margin-bottom: 20px; }
+.tab { padding: 12px 24px; background:none; border:none; color:#666; cursor:pointer; font-size:16px; transition:0.3s; border-bottom:3px solid transparent;}
+.tab.active { color:#FFD700; border-bottom:3px solid #FFD700; }
+.tab-content { display:none;}
+.tab-content.active { display:block; }
+
+.staff-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); gap:20px; margin:20px 0; }
+.staff-card { background:#fff8dc; padding:20px; border-radius:10px; border:2px solid #FFD700; text-align:center; }
+.staff-card h4 { color:#FFD700; }
+
+.timetable { width:100%; border-collapse: collapse; margin:20px 0; }
+.timetable th { background:#FFD700; color:white; padding:12px; text-align:center; }
+.timetable td { border:1px solid #ddd; padding:10px; text-align:center; }
+
+textarea.notebook { width:100%; min-height:200px; padding:10px; border:2px solid #FFD700; border-radius:8px; font-family:'Courier New', monospace; resize: vertical; }
+
+@media(max-width:768px){ .header h1{ font-size:1.8em;} .nav button{ padding:12px 15px; font-size:14px; } .page{ padding:20px; } }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🎓 Hendon College</h1>
+<p>Aspire Believe Achieve</p>
+</div>
+
+<div class="nav">
+<div class="nav-content">
+<button onclick="showPage('home')" class="active">Home</button>
+<button onclick="showPage('about')">About</button>
+<button onclick="showPage('team')">Team</button>
+<button onclick="showPage('news')">News</button>
+<button onclick="showPage('events')">Events</button>
+<button onclick="showPage('login')">Login</button>
+</div>
+</div>
+
+<div class="container">
+
+<!-- Home Page -->
+<div id="home" class="page active">
+<h2>Welcome to Hendon College</h2>
+<p>We provide an outstanding education for every student with a nurturing environment.</p>
+</div>
+
+<!-- About Page -->
+<div id="about" class="page">
+<h2>About Us</h2>
+<p>Founded in 1965, we have been dedicated to excellence in education for decades.</p>
+</div>
+
+<!-- Team Page -->
+<div id="team" class="page">
+<h2>Our Team</h2>
+<div id="staffDisplay" class="staff-grid"></div>
+</div>
+
+<!-- News Page -->
+<div id="news" class="page">
+<h2>School News</h2>
+<div id="newsDisplay"></div>
+</div>
+
+<!-- Events Page -->
+<div id="events" class="page">
+<h2>Upcoming Events</h2>
+<div id="eventsDisplay"></div>
+</div>
+
+<!-- Login Page -->
+<div id="login" class="page">
+<h2>Login</h2>
+<div id="loginOptions" class="login-options">
+<div class="login-card" onclick="showLoginForm('student')">Student Login</div>
+<div class="login-card" onclick="showLoginForm('staff')">Staff Login</div>
+<div class="login-card" onclick="showLoginForm('slt')">SLT Login</div>
+</div>
+
+<div id="loginFormContainer" style="display:none;">
+<button onclick="backToLoginOptions()" class="btn btn-secondary" style="margin-bottom:20px;">← Back</button>
+<div class="login-form">
+<h3 id="loginFormTitle"></h3>
+<div class="form-group"><label>Email:</label><input type="email" id="loginEmail"></div>
+<div class="form-group"><label>Password:</label><input type="password" id="loginPassword"></div>
+<div id="loginError" class="alert error" style="display:none;"></div>
+<button onclick="attemptLogin()" class="btn" style="width:100%;">Login</button>
+</div>
+</div>
+</div>
+
+<!-- Dashboards -->
+<div id="studentDashboard" class="dashboard">
+<div class="dashboard-header">
+<h2>Student Dashboard</h2><button onclick="logout()" class="btn">Logout</button>
+</div>
+<p>Student content will go here.</p>
+</div>
+
+<div id="staffDashboard" class="dashboard">
+<div class="dashboard-header">
+<h2>Staff Dashboard</h2><button onclick="logout()" class="btn">Logout</button>
+</div>
+<p>Staff content will go here.</p>
+</div>
+
+<div id="sltDashboard" class="dashboard">
+<div class="dashboard-header">
+<h2>SLT Dashboard</h2><button onclick="logout()" class="btn">Logout</button>
+</div>
+<p>SLT content will go here.</p>
+</div>
+
+</div>
+
+<script>
+// Firebase config (replace with your own)
+const firebaseConfig = {
+  apiKey: "AIzaSyDgXGeSdQlPuh7q8mxJRtRJY28R9XnG7ac",
+  authDomain: "hendon-college-2e324.firebaseapp.com",
+  projectId: "hendon-college-2e324",
+  storageBucket: "hendon-college-2e324.firebasestorage.app",
+  messagingSenderId: "504722272815",
+  appId: "1:504722272815:web:f707265e6c9fbf4aa4ccda",
+  measurementId: "G-E7F4L6B1Y1"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Navigation
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  event.target.classList.add('active');
+  if(pageId==='team') loadStaff();
+  if(pageId==='news') loadNews();
+  if(pageId==='events') loadEvents();
+}
+
+// Login Form
+let loginType = null;
+function showLoginForm(type){
+  loginType = type;
+  document.getElementById('loginOptions').style.display='none';
+  document.getElementById('loginFormContainer').style.display='block';
+  const titles={'student':'Student Login','staff':'Staff Login','slt':'SLT Login'};
+  document.getElementById('loginFormTitle').textContent = titles[type];
+  document.getElementById('loginEmail').value=''; document.getElementById('loginPassword').value='';
+  document.getElementById('loginError').style.display='none';
+}
+function backToLoginOptions(){
+  document.getElementById('loginOptions').style.display='grid';
+  document.getElementById('loginFormContainer').style.display='none';
+  loginType = null;
+}
+
+// Firebase Auth Login
+function attemptLogin(){
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errorDiv = document.getElementById('loginError');
+  if(!email||!password){ errorDiv.textContent='Enter email and password.'; errorDiv.style.display='block'; return;}
+  auth.signInWithEmailAndPassword(email,password)
+  .then(userCred=>{
+    const user = userCred.user;
+    showDashboard();
+  })
+  .catch(err=>{
+    errorDiv.textContent=err.message; errorDiv.style.display='block';
+  });
+}
+
+function logout(){
+  auth.signOut();
+  document.querySelectorAll('.dashboard').forEach(d=>d.classList.remove('active'));
+  showPage('login');
+  backToLoginOptions();
+}
+
+// Dummy Functions for Display
+function showDashboard(){
+  // Here you can fetch user role from Firestore to show correct dashboard
+  document.getElementById('login').classList.remove('active');
+  document.getElementById('studentDashboard').classList.add('active'); // example
+}
+
+// Load Firestore Data
+function loadStaff(){
+  const container = document.getElementById('staffDisplay');
+  container.innerHTML='Loading...';
+  db.collection('staff').get().then(snapshot=>{
+    if(snapshot.empty){ container.innerHTML='<p>No staff yet.</p>'; return;}
+    container.innerHTML = snapshot.docs.map(doc=>{
+      const data = doc.data();
+      return `<div class="staff-card"><h4>${data.name}</h4><p>${data.email}</p></div>`;
+    }).join('');
+  });
+}
+
+function loadNews(){
+  const container = document.getElementById('newsDisplay');
+  container.innerHTML='Loading...';
+  db.collection('news').orderBy('date','desc').get().then(snapshot=>{
+    if(snapshot.empty){ container.innerHTML='<p>No news yet.</p>'; return;}
+    container.innerHTML = snapshot.docs.map(doc=>{
+      const data = doc.data();
+      return `<div class="news-item"><h4>${data.title}</h4><small>${data.date}</small><p>${data.content}</p></div>`;
+    }).join('');
+  });
+}
+
+function loadEvents(){
+  const container = document.getElementById('eventsDisplay');
+  container.innerHTML='Loading...';
+  db.collection('events').orderBy('date','asc').get().then(snapshot=>{
+    if(snapshot.empty){ container.innerHTML='<p>No events yet.</p>'; return;}
+    container.innerHTML = snapshot.docs.map(doc=>{
+      const data = doc.data();
+      return `<div class="event-item"><h4>${data.title}</h4><small>${data.date}</small><p>${data.description}</p></div>`;
+    }).join('');
+  });
+}
+</script>
+</body>
+</html>
