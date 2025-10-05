@@ -235,11 +235,24 @@ function logout(){
 }
 
 // Dummy Functions for Display
-function showDashboard(){
-  // Here you can fetch user role from Firestore to show correct dashboard
-  document.getElementById('login').classList.remove('active');
-  document.getElementById('studentDashboard').classList.add('active'); // example
+function showDashboardFor(type, userData){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('loginFormContainer').style.display = 'none';
+  document.getElementById('loginOptions').style.display = 'none';
+  
+  const dashboardMap = {
+    student: 'studentDashboard',
+    staff: 'staffDashboard',
+    slt: 'sltDashboard'
+  };
+
+  const dashId = dashboardMap[type];
+  document.getElementById(dashId).classList.add('active');
+
+  // Optionally display username
+  document.querySelector(`#${dashId} h2`).textContent = `${userData.name}'s Dashboard`;
 }
+
 
 // Load Firestore Data
 function loadStaff(){
